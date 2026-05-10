@@ -523,10 +523,7 @@
     ctx.restore();
   }
 
-  function drawOrb(ctx, x, y, r, color, alpha) {
-    const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
-    grad.addColorStop(0, color.replace('oklch', 'rgba').replace(')', ','+alpha+')') );
-    // Simpler approach: just use the color directly with globalAlpha
+  function drawOrb(ctx, x, y, r, alpha) {
     ctx.save();
     ctx.globalAlpha = alpha;
     const g = ctx.createRadialGradient(x, y, 0, x, y, r);
@@ -554,7 +551,7 @@
       if (o.y > H + o.r) o.y = -o.r;
       // Breathe
       const pulse = 0.75 + 0.25*Math.sin(frame*0.012 + o.phase);
-      drawOrb(ctx, o.x, o.y, o.r * pulse, o.color, o.alpha * pulse);
+      drawOrb(ctx, o.x, o.y, o.r * pulse, o.alpha * pulse);
     });
 
     // Cursor particles
@@ -633,7 +630,7 @@ const io = new IntersectionObserver(entries => {
       io.unobserve(e.target);
     }
   });
-}, { threshold: 0.08 });
+}, { threshold: 0.08, rootMargin: '0px 0px 12% 0px' });
 items.forEach(el => io.observe(el));
 
 // Lightbox
@@ -647,9 +644,11 @@ function close() { lb.classList.remove('open'); document.body.style.overflow='';
 function nav(d) { cur = (cur + d + photos.length) % photos.length; lbImg.src = `./assets/${photos[cur]}`; }
 
 items.forEach(el => {
-  if (el.dataset.index === '-1') return;
-  el.addEventListener('click', () => open(+el.dataset.index));
-  el.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' ') open(+el.dataset.index); });
+  const idx = el.dataset.index;
+  if (idx === undefined || idx === '') return;
+  const i = +idx;
+  el.addEventListener('click', () => open(i));
+  el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') open(i); });
 });
 document.getElementById('lb-close').addEventListener('click', close);
 document.getElementById('lb-prev').addEventListener('click', () => nav(-1));
