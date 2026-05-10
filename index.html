@@ -475,46 +475,50 @@
     'oklch(0.88 0.10 30)',
   ];
 
+  const softBlobHues = ['#fce8ec','#f9dde6','#fde8df','#f5e6f0','#fce5e0'];
+
   window.addEventListener('mousemove', e => {
     mx = e.clientX; my = e.clientY;
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 2; i++) {
       particles.push({
-        x: mx + (Math.random()-0.5)*12,
-        y: my + (Math.random()-0.5)*12,
-        r: 4 + Math.random() * 10,
+        x: mx + (Math.random()-0.5)*28,
+        y: my + (Math.random()-0.5)*28,
+        r: 28 + Math.random() * 52,
         color: COLORS[Math.floor(Math.random()*COLORS.length)],
-        alpha: 0.55 + Math.random()*0.35,
-        vx: (Math.random()-0.5)*1.2,
-        vy: -0.4 - Math.random()*1.4,
+        blobHue: softBlobHues[Math.floor(Math.random()*softBlobHues.length)],
+        alpha: 0.045 + Math.random()*0.055,
+        vx: (Math.random()-0.5)*0.38,
+        vy: -0.12 - Math.random()*0.38,
         life: 1,
-        decay: 0.022 + Math.random()*0.018,
-        isPetal: Math.random() > 0.55,
+        decay: 0.0055 + Math.random()*0.0045,
+        isPetal: Math.random() > 0.5,
         angle: Math.random()*Math.PI*2,
-        spin: (Math.random()-0.5)*0.12,
+        spin: (Math.random()-0.5)*0.035,
       });
     }
   });
 
   // Floating ambient orbs that drift slowly
-  const orbs = Array.from({length: 6}, () => ({
+  const orbs = Array.from({length: 5}, () => ({
     x: Math.random()*window.innerWidth,
     y: Math.random()*window.innerHeight,
-    r: 60 + Math.random()*80,
+    r: 130 + Math.random()*160,
     color: COLORS[Math.floor(Math.random()*COLORS.length)],
-    vx: (Math.random()-0.5)*0.3,
-    vy: (Math.random()-0.5)*0.3,
-    alpha: 0.07 + Math.random()*0.06,
+    vx: (Math.random()-0.5)*0.09,
+    vy: (Math.random()-0.5)*0.09,
+    alpha: 0.018 + Math.random()*0.022,
     phase: Math.random()*Math.PI*2,
   }));
 
-  function drawPetal(ctx, x, y, r, angle, color, alpha) {
+  function drawPetal(ctx, x, y, r, angle, alpha) {
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(angle);
     ctx.globalAlpha = alpha;
-    const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
-    grad.addColorStop(0, color);
-    grad.addColorStop(1, 'rgba(255,200,220,0)');
+    const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 1.15);
+    grad.addColorStop(0, 'rgba(255, 232, 238, 0.55)');
+    grad.addColorStop(0.45, 'rgba(249, 200, 214, 0.22)');
+    grad.addColorStop(1, 'rgba(255, 220, 230, 0)');
     ctx.fillStyle = grad;
     ctx.beginPath();
     // Petal shape: skewed ellipse
@@ -527,9 +531,10 @@
     ctx.save();
     ctx.globalAlpha = alpha;
     const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-    g.addColorStop(0, '#f9c0cc');
-    g.addColorStop(0.5, '#f5b0d0');
-    g.addColorStop(1, 'rgba(255,200,220,0)');
+    g.addColorStop(0, 'rgba(255, 236, 240, 0.5)');
+    g.addColorStop(0.35, 'rgba(252, 214, 224, 0.22)');
+    g.addColorStop(0.72, 'rgba(248, 200, 216, 0.08)');
+    g.addColorStop(1, 'rgba(255, 245, 248, 0)');
     ctx.fillStyle = g;
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI*2);
@@ -550,7 +555,7 @@
       if (o.y < -o.r) o.y = H + o.r;
       if (o.y > H + o.r) o.y = -o.r;
       // Breathe
-      const pulse = 0.75 + 0.25*Math.sin(frame*0.012 + o.phase);
+      const pulse = 0.82 + 0.18*Math.sin(frame*0.0035 + o.phase);
       drawOrb(ctx, o.x, o.y, o.r * pulse, o.alpha * pulse);
     });
 
@@ -558,23 +563,24 @@
     for (let i = particles.length-1; i >= 0; i--) {
       const p = particles[i];
       p.x += p.vx; p.y += p.vy;
-      p.vy += 0.04; // gentle gravity
+      p.vy += 0.011;
+      p.vx *= 0.992;
       p.life -= p.decay;
       p.angle += p.spin;
       if (p.life <= 0) { particles.splice(i, 1); continue; }
       if (p.isPetal) {
-        drawPetal(ctx, p.x, p.y, p.r * (0.5 + p.life*0.5), p.angle, '#f9b8c8', p.alpha * p.life);
+        drawPetal(ctx, p.x, p.y, p.r * (0.5 + p.life*0.5), p.angle, p.alpha * p.life);
       } else {
         ctx.save();
         ctx.globalAlpha = p.alpha * p.life;
-        const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * (0.5 + p.life*0.5));
-        const hues = ['#f9c0cc','#f7a8c4','#fbbdda','#f9d4c2','#f5b0d8'];
-        const hue = hues[Math.floor(Math.random()*hues.length)];
-        g.addColorStop(0, hue);
-        g.addColorStop(1, 'rgba(255,200,220,0)');
+        const rad = p.r * (0.55 + p.life*0.45);
+        const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, rad * 1.1);
+        g.addColorStop(0, p.blobHue || '#fce8ec');
+        g.addColorStop(0.5, 'rgba(252, 218, 228, 0.35)');
+        g.addColorStop(1, 'rgba(255, 235, 240, 0)');
         ctx.fillStyle = g;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r * (0.5 + p.life*0.5), 0, Math.PI*2);
+        ctx.arc(p.x, p.y, rad, 0, Math.PI*2);
         ctx.fill();
         ctx.restore();
       }
@@ -595,8 +601,8 @@
   let cx = 50, cy = 50;
   function lerp(a, b, t){ return a + (b-a)*t; }
   function shiftBg(){
-    cx = lerp(cx, tx, 0.04);
-    cy = lerp(cy, ty, 0.04);
+    cx = lerp(cx, tx, 0.011);
+    cy = lerp(cy, ty, 0.011);
     document.body.style.backgroundImage = [
       `radial-gradient(ellipse 80% 60% at ${cx*0.4}% ${cy*0.3}%, oklch(0.93 0.055 5) 0%, transparent 60%)`,
       `radial-gradient(ellipse 70% 50% at ${100 - cx*0.35}% ${100 - cy*0.25}%, oklch(0.91 0.06 340) 0%, transparent 60%)`,
